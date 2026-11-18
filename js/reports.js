@@ -49,10 +49,16 @@ const fetchAll = () =>
 routes.overview = async (v) => {
   const t0 = today(),
     wk = weekStart(t0, S.prefs.week_start);
+<<<<<<< HEAD
   const [[allTasks, acts, transactions, invoices, payments], workouts, todayActs] = await Promise.all([
     fetchAll(),
     must(sb.from("workouts").select("*").eq("workout_date", t0)),
     must(sb.from("activities").select("*").is("archived_at", null).eq("activity_date", t0).limit(2000)),
+=======
+  const [[tasks, acts, transactions, invoices, payments], workouts] = await Promise.all([
+    fetchAll(),
+    must(sb.from("workouts").select("*").eq("workout_date", t0)),
+>>>>>>> f88c2b49f3c3e5afc8cc526a285d069f1e10ff23
   ]);
   const data = { transactions, invoices, payments },
     ws = R.ws || undefined;
