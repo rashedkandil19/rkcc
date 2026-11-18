@@ -35,26 +35,28 @@ function bindRange(el) {
     set(t0.slice(0, 4) + "-01-01", t0.slice(0, 4) + "-12-31");
 }
 const fetchAll = () =>
-  // Limit reports to the selected period. The old dashboard downloaded up to
-  // 25,000 rows (plus unbounded invoice data) even on the first screen.
+  // Keep operational balances complete: old open receivables/payables and
+  // partial invoice payments must be included even when the report period changes.
   Promise.all([
-    must(sb.from("tasks").select("*").is("archived_at", null).lte("due_date", R.to).limit(2500)),
-    must(sb.from("activities").select("*").is("archived_at", null).gte("activity_date", R.from).lte("activity_date", R.to).limit(2500)),
-    must(sb.from("transactions").select("*").gte("txn_date", R.from).lte("txn_date", R.to).limit(2500)),
-    must(sb.from("invoices").select("*").gte("issue_date", R.from).lte("issue_date", R.to).limit(1500)),
-    must(sb.from("invoice_payments").select("*").gte("payment_date", R.from).lte("payment_date", R.to).limit(3000)),
+    must(sb.from("tasks").select("*").is("archived_at", null).limit(10000)),
+    must(sb.from("activities").select("*").is("archived_at", null).gte("activity_date", R.from).lte("activity_date", R.to).limit(5000)),
+    must(sb.from("transactions").select("*").limit(10000)),
+    must(sb.from("invoices").select("*").limit(5000)),
+    must(sb.from("invoice_payments").select("*").limit(10000)),
   ]);
 
 /* ================= Overview dashboard ================= */
 routes.overview = async (v) => {
   const t0 = today(),
     wk = weekStart(t0, S.prefs.week_start);
-  const [tasks, acts, transactions, invoices, payments] = await fetchAll();
-  const workouts = await must(
-    sb.from("workouts").select("*").eq("workout_date", t0),
-  );
+  const [[allTasks, acts, transactions, invoices, payments], workouts, todayActs] = await Promise.all([
+    fetchAll(),
+    must(sb.from("workouts").select("*").eq("workout_date", t0)),
+    must(sb.from("activities").select("*").is("archived_at", null).eq("activity_date", t0).limit(2000)),
+  ]);
   const data = { transactions, invoices, payments },
     ws = R.ws || undefined;
+  const tasks = R.ws ? allTasks.filter((t) => t.workspace_id === R.ws) : allTasks;
   const live = tasks.filter((t) => t.status !== "cancelled");
   const dueToday = live.filter((t) => t.due_date === t0),
     doneToday = tasks.filter(
@@ -64,7 +66,7 @@ routes.overview = async (v) => {
       (t) => t.task_type === "must_do" && isOpen(t),
     ),
     overdue = tasks.filter((t) => isOverdue(t, t0));
-  const todayMins = trackedMinutes(acts.filter((a) => a.activity_date === t0));
+  const todayMins = trackedMinutes(todayActs.filter((a) => !R.ws || a.workspace_id === R.ws));
   const s = summarize(data, { from: R.from, to: R.to, workspace_id: ws });
   const rangeActs = acts.filter(
     (a) => inR(a.activity_date) && (!R.ws || a.workspace_id === R.ws),
