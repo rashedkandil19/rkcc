@@ -42,17 +42,65 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--surface2)}
 @media(max-width:800px){.side{gap:8px}.brand{width:100%}.nav{display:flex;gap:4px;flex-wrap:wrap}.nav a{padding:6px 8px}.top{padding:10px 14px}.content{padding:16px}.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
 @media(max-width:520px){.two{grid-template-columns:1fr}.top{gap:8px}.top input{min-width:0}.top button{white-space:nowrap;padding:8px}.content{padding:12px}.card{padding:12px}table{display:block;overflow-x:auto;white-space:nowrap}}
 
-/* Arabic / RTL layout and guide */
-:root[dir="rtl"] body{direction:rtl;text-align:right}
-:root[dir="rtl"] th,:root[dir="rtl"] td{text-align:right}
-:root[dir="rtl"] .toast{border-left:0;border-right:4px solid var(--ok)}
-:root[dir="rtl"] .toast.err{border-right-color:var(--bad)}
-:root[dir="rtl"] .dot{margin-right:0;margin-left:6px}
-.split-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
-.split-day{background:var(--surface2);border-radius:var(--r);padding:12px;display:grid;gap:5px}
-.split-day b{font-size:11px;color:var(--muted)}
-.guide-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.guide-grid ol,.guide-grid ul{padding-inline-start:22px}
-.guide-grid li{margin:7px 0}
-.checklist{list-style:'☐  '}
-:root[dir="rtl"] .checklist{list-style:'☐  '}
+
+/* Responsive layout improvements */
+html { -webkit-text-size-adjust: 100%; }
+body { min-width: 320px; }
+.shell, .main, .content { min-width: 0; }
+.content { width: 100%; }
+.card, section, .grid > * { min-width: 0; }
+img, canvas, svg { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; }
+input, select, textarea { min-height: 40px; }
+button { min-height: 38px; }
+.table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { min-width: 620px; }
+.modal-bg { overflow-y: auto; align-items: start; }
+.modal { margin: auto; }
+.fg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.fg .full { grid-column: 1 / -1; }
+
+@media (max-width: 800px) {
+  .shell { display: block; }
+  .side { position: sticky; top: 0; z-index: 8; height: auto; width: 100%; display: block; padding: 8px 10px 7px; box-shadow: 0 3px 14px #0003; }
+  .brand { padding: 2px 5px 7px; font-size: 14px; }
+  .brand small { display: none; }
+  .nav { display: flex; flex-wrap: nowrap; gap: 5px; overflow-x: auto; overflow-y: hidden; padding: 0 0 3px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+  .nav a { flex: 0 0 auto; white-space: nowrap; padding: 7px 10px; font-size: 13px; }
+  .main { width: 100%; }
+  .top { padding: 10px 12px; gap: 8px; }
+  .top input { min-width: 0; width: 100%; }
+  .content { padding: 14px 12px 24px; max-width: none; }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+  .two { grid-template-columns: minmax(0, 1fr); }
+  .row { min-width: 0; }
+  .row > input, .row > select { min-width: 0; }
+  .results { left: 12px; width: calc(100vw - 24px); max-width: none; }
+  table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 520px) {
+  body { font-size: 14px; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; }
+  .top { align-items: stretch; }
+  .top button { flex: 0 0 auto; padding: 8px 10px; font-size: 12px; }
+  .content { padding: 12px 10px 22px; }
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .card { padding: 12px; }
+  .row.between { align-items: flex-start; }
+  .tabs { display: flex; gap: 5px; max-width: 100%; overflow-x: auto; }
+  .tabs button { white-space: nowrap; }
+  .fg { grid-template-columns: minmax(0, 1fr); }
+  .fg .full { grid-column: auto; }
+  .modal-bg { padding: 8px; }
+  .modal { padding: 14px; max-height: calc(100dvh - 16px); }
+  #toasts { left: 10px; right: 10px; bottom: 10px; }
+  .toast { max-width: 100%; overflow-wrap: anywhere; }
+  .empty { padding: 28px 12px; }
+}
+@media (max-width: 360px) {
+  .nav a { padding: 6px 8px; font-size: 12px; }
+  .top { flex-wrap: wrap; }
+  .top input { flex-basis: 100%; }
+  .top button { width: 100%; }
+}

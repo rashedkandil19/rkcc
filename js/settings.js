@@ -1,7 +1,6 @@
 import { sb, S, $, esc, must, toast, confirmBox, routes, savePref } from './core.js';
 import { TABLES, buildBackup, validateBackup } from './backup.js';
 import { downloadJSON } from './export.js';
-import { applyLanguage } from './i18n.js';
 
 const BACKUP_INTERVAL_DAYS = 7;
 
@@ -57,7 +56,6 @@ routes.settings = async v => {
   v.innerHTML = `<div class="row between"><div><h1>Settings & Backup</h1><p class="muted">Personal preferences, account and data safety.</p></div></div>
     <div class="two" style="margin-top:16px">
       <section class="card"><h2>Preferences</h2>
-        <div class="f"><label for="language">Language</label><select id="language"><option value="en">English</option><option value="ar">العربية</option></select></div>
         <div class="f"><label for="currency">Currency</label><select id="currency"><option value="EGP">EGP — Egyptian Pound</option><option value="USD">USD — US Dollar</option></select></div>
         <div class="f"><label for="datefmt">Date format</label><select id="datefmt"><option>DD MMM YYYY</option><option>DD/MM/YYYY</option><option>YYYY-MM-DD</option></select></div>
         <div class="f"><label for="weekstart">Week starts on</label><select id="weekstart"><option value="saturday">Saturday</option><option value="sunday">Sunday</option><option value="monday">Monday</option></select></div>
@@ -73,7 +71,6 @@ routes.settings = async v => {
       <section class="card"><h2>Account</h2><p>${esc(S.email || '')}</p><button id="logout" class="danger">Sign out</button></section>
       <section class="card"><h2>About</h2><b>RK Control Center</b><p class="muted">Business & Life Operating System · Version 1.0</p><p class="small muted">Your data is stored in your Supabase project and protected by Row Level Security policies. Never share your service_role key.</p></section>
     </div>`;
-  $('#language', v).value = S.prefs.language || 'en';
   $('#currency', v).value = S.prefs.currency || 'EGP';
   $('#datefmt', v).value = S.prefs.date_format || 'DD MMM YYYY';
   $('#weekstart', v).value = S.prefs.week_start || 'saturday';
@@ -83,12 +80,12 @@ routes.settings = async v => {
   $('#saveprefs', v).onclick = async () => {
     const btn = $('#saveprefs', v); btn.disabled = true;
     try {
-      for (const [k, el] of [['language', 'language'], ['currency', 'currency'], ['date_format', 'datefmt'], ['week_start', 'weekstart'], ['theme', 'theme']]) {
+      for (const [k, el] of [['currency', 'currency'], ['date_format', 'datefmt'], ['week_start', 'weekstart'], ['theme', 'theme']]) {
         const value = $('#' + el, v).value;
         await savePref(k, value);
       }
       await savePref('auto_backup', $('#autobackup', v).checked);
-      applyLanguage(S.prefs.language); toast('Preferences saved.');
+      toast('Preferences saved.');
     } catch (e) { toast(e.message, true); }
     btn.disabled = false;
   };

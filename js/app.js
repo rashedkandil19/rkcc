@@ -7,11 +7,9 @@ import { workoutForm } from './fitness.js';
 import { txnForm } from './finance.js';
 import './reports.js';
 import { autoBackupIfDue } from './settings.js';
-import { initLanguage } from './i18n.js';
-import './guide.js';
 
 const app = $('#app');
-const NAV = [['overview', 'Overview'], ['daily', 'Daily Log'], ['tasks', 'Tasks'], ['projects', 'Projects & Workspaces'], ['finance', 'Finance'], ['fitness', 'Fitness & Habits'], ['reports', 'Reports'], ['guide', 'Getting Started'], ['settings', 'Settings & Backup']];
+const NAV = [['overview', 'Overview'], ['daily', 'Daily Log'], ['tasks', 'Tasks'], ['projects', 'Projects & Workspaces'], ['finance', 'Finance'], ['fitness', 'Fitness & Habits'], ['reports', 'Reports'], ['settings', 'Settings & Backup']];
 
 if (SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON')) {
   app.innerHTML = `<div class="login"><h1>Setup needed</h1><p class="muted">Open <code>js/config.js</code>, paste your Supabase URL and anon key, then reload.</p></div>`;
@@ -38,7 +36,7 @@ function showLogin() {
 
 async function start(user) {
   S.user = user; S.email = user.email;
-  try { await must(sb.rpc('seed_defaults')); await loadPrefs(); initLanguage(); await loadLists(); }
+  try { await must(sb.rpc('seed_defaults')); await loadPrefs(); await loadLists(); }
   catch (e) {
     app.innerHTML = `<div class="login"><h1>Database not ready</h1><p class="err-text">${esc(e.message)}</p><p class="muted">Run <code>supabase/schema.sql</code> in the Supabase SQL Editor, then reload.</p></div>`;
     return;
@@ -56,7 +54,6 @@ async function start(user) {
     if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); quickAdd(); }
   });
   window.onhashchange = route;
-  if (!S.prefs.setup_complete && !location.hash) location.hash = '#/guide';
   route();
   autoBackupIfDue().catch(() => {});
 }

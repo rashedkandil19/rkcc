@@ -149,7 +149,7 @@ create table workouts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   workout_date date not null default current_date,
-  workout_type text not null check (workout_type in ('chest','back','shoulders','biceps','triceps','legs','abs','push','pull','upper','lower','cardio','rest','other')),
+  workout_type text not null check (workout_type in ('push','pull','legs','upper','lower','cardio','rest','other')),
   duration_minutes int check (duration_minutes >= 0),
   status text not null default 'planned' check (status in ('planned','done','skipped')),
   exercises jsonb, notes text,
@@ -375,8 +375,3 @@ begin
   end if;
   return nid;
 end $$;
-
--- Muscle-group workout categories (safe to re-run on existing projects).
-alter table workouts drop constraint if exists workouts_workout_type_check;
-alter table workouts add constraint workouts_workout_type_check
-  check (workout_type in ('chest','back','shoulders','biceps','triceps','legs','abs','push','pull','upper','lower','cardio','rest','other'));

@@ -1,18 +1,14 @@
 import { sb, S, $, $$, esc, fmtDate, fmtMins, label, today, must, empty, stat, toast, confirmBox, formModal, refresh, routes } from './core.js';
 import { addDays, weekStart, monthStart, habitStreak, consistency } from './logic.js';
 
-const WTYPES = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'legs', 'abs', 'cardio', 'rest', 'other', 'push', 'pull', 'upper', 'lower'], WSTATUS = ['planned', 'done', 'skipped'];
+const WTYPES = ['push', 'pull', 'legs', 'upper', 'lower', 'cardio', 'rest', 'other'], WSTATUS = ['planned', 'done', 'skipped'];
 const T = { tab: 'workouts' };
-const SPLIT = [
-  ['chest','Chest'],['back','Back'],['shoulders','Shoulders'],['biceps','Biceps'],
-  ['triceps','Triceps'],['legs','Legs'],['rest','Rest / Abs & Recovery']
-];
 
 export function workoutForm(w, defaults = {}) {
   const d = w || defaults;
   formModal(w ? 'Edit workout' : 'New workout', [
     { id: 'workout_date', label: 'Date', type: 'date', required: true, value: d.workout_date || today() },
-    { id: 'workout_type', label: 'Muscle group / workout type', type: 'select', options: WTYPES, value: d.workout_type || 'chest' },
+    { id: 'workout_type', label: 'Workout type', type: 'select', options: WTYPES, value: d.workout_type || 'push' },
     { id: 'duration_minutes', label: 'Duration (minutes)', type: 'number', min: 0, value: d.duration_minutes },
     { id: 'status', label: 'Status', type: 'select', options: WSTATUS, value: d.status || 'done' },
     { id: 'exercises', label: 'Exercises (optional, one per line: name, sets x reps, weight)', type: 'textarea', rows: 5, value: Array.isArray(d.exercises) ? d.exercises.join('\n') : '' },
@@ -57,7 +53,6 @@ async function workouts(el) {
   const done = rows.filter(w => w.status === 'done' && w.workout_type !== 'rest');
   const week = done.filter(w => w.workout_date >= ws), month = done.filter(w => w.workout_date >= ms);
   el.innerHTML = `<div class="grid">${stat('This week', week.length, 'workouts done')}${stat('This month', month.length, 'workouts done')}${stat('Minutes this month', fmtMins(month.reduce((s, w) => s + (w.duration_minutes || 0), 0)))}</div>
-    <section class="card" style="margin-top:12px"><h2>Muscle-group split</h2><p class="muted small">One primary muscle group per day. Adjust rest days and exercise volume to your recovery.</p><div class="grid split-grid">${SPLIT.map(([k,n],i)=>`<div class="split-day"><b>Day ${i+1}</b><div>${n}</div></div>`).join('')}</div></section>
     <div class="card" style="margin-top:12px"><div class="row between"><h2>Workouts</h2><button class="pri sm" id="nw">+ Workout</button></div>
     ${rows.length ? `<table><thead><tr><th>Date</th><th>Type</th><th>Status</th><th>Duration</th><th>Notes</th><th></th></tr></thead><tbody>${rows.map(w => `<tr><td>${fmtDate(w.workout_date)}</td><td>${label(w.workout_type)}</td><td><span class="badge">${label(w.status)}</span></td><td>${w.duration_minutes ? fmtMins(w.duration_minutes) : '—'}</td>
       <td>${esc(w.notes || '')}${Array.isArray(w.exercises) && w.exercises.length ? `<div class="muted small">${w.exercises.length} exercises</div>` : ''}</td><td class="nowrap"><button class="sm" data-e="${w.id}">Edit</button> <button class="sm" data-d="${w.id}">Delete</button></td></tr>`).join('')}</tbody></table>` : empty('No workouts logged yet.')}</div>`;

@@ -4,7 +4,7 @@ import { toISODate } from './logic.js';
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const S = { ws: [], projects: [], clients: [], accounts: [], categories: [], email: '', user: null,
-  prefs: { currency: 'EGP', date_format: 'DD MMM YYYY', week_start: 'saturday', theme: 'dark', auto_backup: false, last_backup: null, language: 'en', setup_complete: false } };
+  prefs: { currency: 'EGP', date_format: 'DD MMM YYYY', week_start: 'saturday', theme: 'dark', auto_backup: false, last_backup: null } };
 export const routes = {};            // page -> async (container, arg)
 export const cleanups = [];          // functions run on navigation (timers etc.)
 
@@ -93,15 +93,25 @@ export function formModal(title, fields, onSubmit, submitLabel = 'Save', wide = 
 }
 
 /* ---- data lists shared by forms ---- */
-export async function loadLists() {
-  const [ws, projects, clients, accounts, categories] = await Promise.all([
-    must(sb.from('workspaces').select('*').order('sort_order').order('name')),
-    must(sb.from('projects').select('id,name,workspace_id,client_id,status,commission_type,commission_value,contract_value_minor,budget_minor,archived_at').is('archived_at', null).order('name')),
-    must(sb.from('clients').select('*').is('archived_at', null).order('name')),
-    must(sb.from('accounts').select('*').order('name')),
-    must(sb.from('categories').select('*').is('archived_at', null).order('name'))]);
-  Object.assign(S, { ws, projects, clients, accounts, categories });
+let listsCacheAt = 0;
+let listsRequest = null;
+export async function loadLists(force = false) {
+  // Reuse lookup data while navigating instead of downloading five tables on every page.
+  if (!force && listsCacheAt && Date.now() - listsCacheAt < 30000) return;
+  if (listsRequest) return listsRequest;
+  listsRequest = (async () => {
+    const [ws, projects, clients, accounts, categories] = await Promise.all([
+      must(sb.from('workspaces').select('id,name,color,sort_order,archived_at').order('sort_order').order('name')),
+      must(sb.from('projects').select('id,name,workspace_id,client_id,status,commission_type,commission_value,contract_value_minor,budget_minor,archived_at').is('archived_at', null).order('name')),
+      must(sb.from('clients').select('id,name,email,phone,company,notes,archived_at').is('archived_at', null).order('name')),
+      must(sb.from('accounts').select('*').order('name')),
+      must(sb.from('categories').select('id,name,kind,color,archived_at').is('archived_at', null).order('name'))]);
+    Object.assign(S, { ws, projects, clients, accounts, categories });
+    listsCacheAt = Date.now();
+  })();
+  try { await listsRequest; } finally { listsRequest = null; }
 }
+export function invalidateLists() { listsCacheAt = 0; }
 export const loadWs = loadLists;
 export const projectOptions = (withNone = true) => [...(withNone ? [['', '— none —']] : []), ...S.projects.map(p => [p.id, p.name])];
 export const wsOptions = () => activeWs().map(w => [w.id, w.name]);
@@ -124,4 +134,4 @@ export function bars(items, fmt = String) {
   return items.length ? `<div class="bars">${items.map(i => `<div class="bar-row"><span class="bar-l">${esc(i.label)}</span><span class="bar-t"><i style="width:${Math.max(2, Math.abs(i.value) / max * 100)}%;background:${i.value < 0 ? 'var(--bad)' : (i.color || 'var(--accent)')}"></i></span><span class="bar-v">${esc(fmt(i.value))}</span></div>`).join('')}</div>` : '<div class="empty">No data in this period.</div>';
 }
 export const stat = (title, value, note = '', cls = '') => `<div class="card"><div class="muted">${esc(title)}</div><div class="stat ${cls}">${value}</div>${note ? `<div class="muted small">${esc(note)}</div>` : ''}</div>`;
-export const refresh = () => window.dispatchEvent(new Event('hashchange'));
+export const refresh = () => { invalidateLists(); window.dispatchEvent(new Event('hashchange')); };

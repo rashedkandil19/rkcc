@@ -44,7 +44,7 @@ const settle = t => formModal(`Settle ${label(t.type)}`, [{ id: 'account', label
 
 /* ---------- page ---------- */
 routes.finance = async v => {
-  const [transactions, invoices, payments] = await Promise.all([must(sb.from('transactions').select('*').order('txn_date', { ascending: false }).order('created_at', { ascending: false }).limit(5000)), must(sb.from('invoices').select('*').order('issue_date', { ascending: false })), must(sb.from('invoice_payments').select('*'))]);
+  const [transactions, invoices, payments] = await Promise.all([must(sb.from('transactions').select('*').order('txn_date', { ascending: false }).order('created_at', { ascending: false }).limit(5000)), must(sb.from('invoices').select('*').order('issue_date', { ascending: false }).limit(2000)), must(sb.from('invoice_payments').select('*').limit(5000))]);
   const data = { transactions, invoices, payments };
   const tabs = ['summary', 'transactions', 'invoices', 'accounts', 'store'];
   v.innerHTML = `<div class="row between"><div><h1>Finance</h1><p class="muted">Internal management accounting, not certified tax software. Amounts in ${esc(S.prefs.currency)}.</p></div>
@@ -177,7 +177,7 @@ function accTab(el, data) {
 
 /* ---------- RK Store ---------- */
 async function storeTab(el) {
-  const [products, orders] = await Promise.all([must(sb.from('products').select('*').is('archived_at', null).order('name')), must(sb.from('orders').select('*').order('order_date', { ascending: false }))]);
+  const [products, orders] = await Promise.all([must(sb.from('products').select('*').is('archived_at', null).order('name')), must(sb.from('orders').select('*').order('order_date', { ascending: false }).limit(2000))]);
   const perf = productPerformance(products, orders), PF = ['selling_price_minor', 'unit_cost_minor', 'packaging_minor', 'delivery_minor', 'processing_minor', 'ad_minor'];
   const pForm = p => formModal(p ? 'Edit product' : 'New product', [{ id: 'name', label: 'Name', required: true, value: p?.name }, { id: 'sku', label: 'SKU', value: p?.sku },
     { id: 'selling_price_minor', label: 'Selling price', type: 'money', value: p?.selling_price_minor ?? 0 }, { id: 'unit_cost_minor', label: 'Manufacturing cost / unit', type: 'money', value: p?.unit_cost_minor ?? 0 },
