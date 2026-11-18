@@ -4,11 +4,7 @@ import { initLanguage, setLanguage, syncLanguage, getLang } from './i18n.js';
 
 // Pages are loaded only when opened (the first screen no longer downloads every page's code).
 const PAGES = { overview: './reports.js', reports: './reports.js', daily: './daily.js', tasks: './tasks.js', projects: './projects.js', project: './projects.js',
-<<<<<<< HEAD
   finance: './finance.js', fitness: './fitness.js', settings: './settings.js', guide: './guide.js' };
-=======
-  finance: './finance.js', fitness: './fitness.js', settings: './settings.js' };
->>>>>>> 518b421b57dd7a7e78ba0b506bbc6875bbc79aa6
 
 initLanguage();
 const app = $('#app');
