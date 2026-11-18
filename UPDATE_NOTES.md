@@ -1,3 +1,27 @@
+# RK Control Center – Arabic, Speed, Phone Layout & Muscle Picker
+
+## Arabic
+- Language button in the top bar (and on the sign-in page), plus a Language option in Settings → Preferences.
+- Full right-to-left layout. The choice is remembered on the device and saved to your account (`settings` table, key `language`) – no schema change.
+- What you type (notes, titles, names, exercises) is never translated or altered.
+- If any English text is left on screen in Arabic mode, open the browser console and run `rkMissingTranslations()` to list it.
+
+## Faster loading
+- Pages (Finance, Reports, Tasks...) are now downloaded when first opened instead of all at startup; the rest load quietly in the background.
+- Sign-in startup runs preferences + lookup lists in parallel, and skips the `seed_defaults` call once it has run in this browser.
+- Overview loads today's workouts in parallel with its other queries.
+- Browser hints (`preconnect` / `modulepreload`) start the Supabase library download earlier.
+
+## Phones, tablets, large screens
+- Tables no longer push the whole page sideways (a 620px minimum width was overriding the scroll container); they scroll inside their card.
+- Added styles that the app already used but the stylesheet never defined: tabs, bar charts, kanban, calendar, habit cells, invoice item rows. Kanban scrolls sideways on phones.
+- 16px form fields on phones (stops iOS zooming), sticky Save/Cancel in dialogs, tablet and wide-screen breakpoints.
+
+## Workouts: pick by muscle
+- In the workout form, a new "Pick the exercises you did" section: one list per muscle (Chest, Back, Shoulders, Biceps, Triceps, Forearms, Legs, Glutes, Abs, Cardio).
+- Ticking an exercise adds it to the Exercises box; unticking removes it; editing the box updates the ticks. Existing workouts are pre-ticked when you edit them.
+- Stored in the existing `exercises` field, so the database and old workouts are unaffected. `workout_type` still uses the values allowed by the database.
+
 # RK Control Center – Mobile & Performance Update
 
 ## Mobile responsiveness

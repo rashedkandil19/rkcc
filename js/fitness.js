@@ -1,12 +1,13 @@
 import { sb, S, $, $$, esc, fmtDate, fmtMins, label, today, must, empty, stat, toast, confirmBox, formModal, refresh, routes } from './core.js';
 import { addDays, weekStart, monthStart, habitStreak, consistency } from './logic.js';
+import { getLang } from './i18n.js';
 
 const WTYPES = ['push', 'pull', 'legs', 'upper', 'lower', 'cardio', 'rest', 'other'], WSTATUS = ['planned', 'done', 'skipped'];
 const T = { tab: 'workouts' };
 
 export function workoutForm(w, defaults = {}) {
   const d = w || defaults;
-  formModal(w ? 'Edit workout' : 'New workout', [
+  const m = formModal(w ? 'Edit workout' : 'New workout', [
     { id: 'workout_date', label: 'Date', type: 'date', required: true, value: d.workout_date || today() },
     { id: 'workout_type', label: 'Workout type', type: 'select', options: WTYPES, value: d.workout_type || 'push' },
     { id: 'duration_minutes', label: 'Duration (minutes)', type: 'number', min: 0, value: d.duration_minutes },
@@ -17,6 +18,77 @@ export function workoutForm(w, defaults = {}) {
     if (w) await must(sb.from('workouts').update(row).eq('id', w.id)); else await must(sb.from('workouts').insert(row));
     toast('Workout saved'); refresh();
   }, 'Save workout', true);
+  attachMusclePicker(m.el);
+}
+
+/* ---- Muscle-by-muscle exercise picker (workout form) ----
+   Each muscle has its own list. Ticking an exercise adds a line to the existing "Exercises" box, unticking removes it,
+   and editing the box by hand updates the ticks. Nothing new is stored: it is the same `exercises` field as before,
+   so the database and old workouts are unaffected. Second value is the Arabic display name. */
+const MUSCLES = [
+  { k: 'chest', n: 'Chest', x: [['Barbell Bench Press', 'بنش برس بالبار'], ['Incline Bench Press', 'بنش برس مائل'], ['Dumbbell Bench Press', 'بنش برس بالدمبل'], ['Incline Dumbbell Press', 'ضغط دمبل مائل'],
+    ['Decline Bench Press', 'بنش برس منحدر'], ['Dumbbell Flyes', 'فلاي دمبل'], ['Cable Crossover', 'كروس أوفر كابل'], ['Chest Press Machine', 'جهاز ضغط الصدر'], ['Pec Deck Fly', 'جهاز بيك ديك'],
+    ['Push-ups', 'تمرين الضغط'], ['Chest Dips', 'متوازي للصدر']] },
+  { k: 'back', n: 'Back', x: [['Pull-ups', 'عقلة'], ['Lat Pulldown', 'سحب أمامي'], ['Close-Grip Pulldown', 'سحب أمامي ضيق'], ['Barbell Row', 'تجديف بالبار'], ['One-Arm Dumbbell Row', 'تجديف دمبل ذراع واحدة'],
+    ['Seated Cable Row', 'تجديف كابل جلوس'], ['T-Bar Row', 'تجديف تي بار'], ['Deadlift', 'ديدلفت'], ['Straight-Arm Pulldown', 'سحب بذراع مستقيمة'], ['Back Extension', 'تمديد الظهر']] },
+  { k: 'shoulders', n: 'Shoulders', x: [['Overhead Press', 'ضغط أكتاف بالبار'], ['Dumbbell Shoulder Press', 'ضغط أكتاف دمبل'], ['Arnold Press', 'أرنولد برس'], ['Lateral Raises', 'رفرفة جانبية'],
+    ['Front Raises', 'رفرفة أمامية'], ['Rear Delt Fly', 'رفرفة خلفية'], ['Face Pulls', 'فيس بول'], ['Upright Row', 'سحب عمودي'], ['Shrugs', 'شراجز'], ['Machine Shoulder Press', 'جهاز ضغط الأكتاف']] },
+  { k: 'biceps', n: 'Biceps', x: [['Barbell Curl', 'بايسبس بار'], ['Dumbbell Curl', 'بايسبس دمبل'], ['Hammer Curl', 'هامر كيرل'], ['Preacher Curl', 'بريتشر كيرل'],
+    ['Incline Dumbbell Curl', 'بايسبس دمبل مائل'], ['Cable Curl', 'بايسبس كابل'], ['Concentration Curl', 'كيرل تركيز'], ['EZ-Bar Curl', 'بايسبس بار EZ']] },
+  { k: 'triceps', n: 'Triceps', x: [['Triceps Pushdown', 'سحب ترايسبس كابل'], ['Rope Pushdown', 'سحب ترايسبس بالحبل'], ['Skull Crushers', 'سكل كراشر'], ['Overhead Triceps Extension', 'تمديد ترايسبس فوق الرأس'],
+    ['Close-Grip Bench Press', 'بنش برس ضيق'], ['Triceps Dips', 'متوازي ترايسبس'], ['Triceps Kickback', 'كيك باك ترايسبس'], ['Bench Dips', 'ديبس على البنش']] },
+  { k: 'forearms', n: 'Forearms', x: [['Wrist Curl', 'ثني الرسغ'], ['Reverse Wrist Curl', 'ثني الرسغ عكسي'], ['Reverse Curl', 'بايسبس عكسي'], ["Farmer's Walk", 'مشي المزارع']] },
+  { k: 'legs', n: 'Legs', x: [['Barbell Squat', 'سكوات بالبار'], ['Front Squat', 'سكوات أمامي'], ['Leg Press', 'ضغط أرجل'], ['Hack Squat', 'هاك سكوات'], ['Lunges', 'اندفاع'],
+    ['Bulgarian Split Squat', 'سكوات بلغاري'], ['Romanian Deadlift', 'رومانيان ديدلفت'], ['Leg Extension', 'تمديد الأرجل'], ['Leg Curl', 'ثني الأرجل'],
+    ['Standing Calf Raise', 'سمانة واقف'], ['Seated Calf Raise', 'سمانة جالس']] },
+  { k: 'glutes', n: 'Glutes', x: [['Hip Thrust', 'هيب ثرست'], ['Glute Bridge', 'جسر الأرداف'], ['Cable Kickback', 'كيك باك كابل'], ['Sumo Deadlift', 'سومو ديدلفت'], ['Step-ups', 'صعود الدرجة']] },
+  { k: 'abs', n: 'Abs', x: [['Crunches', 'كرانش'], ['Plank', 'بلانك'], ['Hanging Leg Raise', 'رفع الأرجل من التعلق'], ['Leg Raises', 'رفع الأرجل'], ['Cable Crunch', 'كرانش كابل'],
+    ['Russian Twist', 'روسيان تويست'], ['Bicycle Crunch', 'كرانش الدراجة'], ['Ab Wheel Rollout', 'عجلة البطن'], ['Mountain Climbers', 'متسلق الجبال'], ['Side Plank', 'بلانك جانبي']] },
+  { k: 'cardio', n: 'Cardio', x: [['Treadmill', 'جهاز المشي'], ['Running', 'جري'], ['Walking', 'مشي'], ['Cycling', 'دراجة'], ['Rowing Machine', 'جهاز التجديف'], ['Elliptical', 'إليبتيكال'],
+    ['Stair Climber', 'جهاز السلالم'], ['Jump Rope', 'نط الحبل'], ['HIIT', 'تمارين عالية الشدة'], ['Swimming', 'سباحة']] },
+];
+const TYPE_MUSCLE = { push: 'chest', pull: 'back', legs: 'legs', upper: 'chest', lower: 'legs', cardio: 'cardio' };
+const nameRx = n => new RegExp('^' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:$|[,:;|(×x\\-–—@\\d])', 'i');
+
+function attachMusclePicker(root) {
+  const box = $('#f_exercises', root), typeSel = $('#f_workout_type', root);
+  if (!box) return;
+  const ar = getLang() === 'ar';
+  const lines = () => box.value.split('\n');
+  const has = name => lines().some(l => nameRx(name).test(l.trim()));
+  let active = TYPE_MUSCLE[typeSel?.value] || 'chest', picked = false;
+  const first = MUSCLES.find(m => m.x.some(([n]) => has(n)));
+  if (first) active = first.k;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'f full mpick';
+  box.closest('.f').before(wrap);
+
+  const render = () => {
+    const m = MUSCLES.find(x => x.k === active) || MUSCLES[0];
+    wrap.innerHTML = `<label>Pick the exercises you did</label>
+      <div class="mchips" role="tablist">${MUSCLES.map(x => { const c = x.x.filter(([n]) => has(n)).length;
+        return `<button type="button" role="tab" class="chip ${x.k === m.k ? 'on' : ''}" data-m="${x.k}" aria-selected="${x.k === m.k}">${x.n}${c ? ` <b class="cnt" translate="no">${c}</b>` : ''}</button>`; }).join('')}</div>
+      <div class="mlist">${m.x.map(([n, a]) => `<label class="chk"><input type="checkbox" data-x="${esc(n)}" ${has(n) ? 'checked' : ''}><span translate="no">${esc(ar ? a : n)}</span></label>`).join('')}</div>
+      <p class="muted small" style="margin:6px 0 0">Tick the exercises you did. They are added to the exercises box below.</p>`;
+  };
+  wrap.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    active = b.dataset.m; picked = true; render();
+  });
+  wrap.addEventListener('change', e => {
+    const cb = e.target.closest('input[data-x]'); if (!cb) return;
+    const name = cb.dataset.x, rx = nameRx(name);
+    let ls = lines();
+    if (cb.checked) { if (!has(name)) { while (ls.length && !ls[ls.length - 1].trim()) ls.pop(); ls.push(name); } }
+    else ls = ls.filter(l => !rx.test(l.trim()));
+    box.value = ls.join('\n').replace(/^\n+/, '');
+    render();                                          // refresh the counters on the muscle chips
+    wrap.querySelector(`input[data-x="${CSS.escape(name)}"]`)?.focus();
+  });
+  box.addEventListener('input', render);               // typing in the box updates the ticks
+  typeSel?.addEventListener('change', () => { if (!picked && TYPE_MUSCLE[typeSel.value]) { active = TYPE_MUSCLE[typeSel.value]; render(); } });
+  render();
 }
 
 /** none -> done -> missed -> none. Hour-based habits (sleep) ask for the value instead. */

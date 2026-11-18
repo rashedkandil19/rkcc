@@ -4,7 +4,7 @@ import { toISODate } from './logic.js';
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const S = { ws: [], projects: [], clients: [], accounts: [], categories: [], email: '', user: null,
-  prefs: { currency: 'EGP', date_format: 'DD MMM YYYY', week_start: 'saturday', theme: 'dark', auto_backup: false, last_backup: null } };
+  prefs: { currency: 'EGP', date_format: 'DD MMM YYYY', week_start: 'saturday', theme: 'dark', auto_backup: false, last_backup: null, language: null } };
 export const routes = {};            // page -> async (container, arg)
 export const cleanups = [];          // functions run on navigation (timers etc.)
 
@@ -105,7 +105,7 @@ export async function loadLists(force = false) {
       must(sb.from('projects').select('id,name,workspace_id,client_id,status,commission_type,commission_value,contract_value_minor,budget_minor,archived_at').is('archived_at', null).order('name')),
       must(sb.from('clients').select('id,name,email,phone,company,notes,archived_at').is('archived_at', null).order('name')),
       must(sb.from('accounts').select('*').order('name')),
-      must(sb.from('categories').select('id,name,kind,color,archived_at').is('archived_at', null).order('name'))]);
+      must(sb.from('categories').select('id,name,kind,archived_at').is('archived_at', null).order('name'))]);
     Object.assign(S, { ws, projects, clients, accounts, categories });
     listsCacheAt = Date.now();
   })();
