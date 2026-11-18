@@ -41,3 +41,18 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--surface2)}
 :root[data-theme="light"]{--bg:#f3f4f6;--surface:#fff;--surface2:#e5e7eb;--text:#111827;--muted:#6b7280}
 @media(max-width:800px){.side{gap:8px}.brand{width:100%}.nav{display:flex;gap:4px;flex-wrap:wrap}.nav a{padding:6px 8px}.top{padding:10px 14px}.content{padding:16px}.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
 @media(max-width:520px){.two{grid-template-columns:1fr}.top{gap:8px}.top input{min-width:0}.top button{white-space:nowrap;padding:8px}.content{padding:12px}.card{padding:12px}table{display:block;overflow-x:auto;white-space:nowrap}}
+
+/* Arabic / RTL layout and guide */
+:root[dir="rtl"] body{direction:rtl;text-align:right}
+:root[dir="rtl"] th,:root[dir="rtl"] td{text-align:right}
+:root[dir="rtl"] .toast{border-left:0;border-right:4px solid var(--ok)}
+:root[dir="rtl"] .toast.err{border-right-color:var(--bad)}
+:root[dir="rtl"] .dot{margin-right:0;margin-left:6px}
+.split-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.split-day{background:var(--surface2);border-radius:var(--r);padding:12px;display:grid;gap:5px}
+.split-day b{font-size:11px;color:var(--muted)}
+.guide-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.guide-grid ol,.guide-grid ul{padding-inline-start:22px}
+.guide-grid li{margin:7px 0}
+.checklist{list-style:'☐  '}
+:root[dir="rtl"] .checklist{list-style:'☐  '}
