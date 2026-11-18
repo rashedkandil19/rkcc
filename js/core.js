@@ -4,7 +4,7 @@ import { toISODate } from './logic.js';
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const S = { ws: [], projects: [], clients: [], accounts: [], categories: [], email: '', user: null,
-  prefs: { currency: 'EGP', date_format: 'DD MMM YYYY', week_start: 'saturday', theme: 'dark', auto_backup: false, last_backup: null } };
+  prefs: { currency: 'EGP', date_format: 'DD MMM YYYY', week_start: 'saturday', theme: 'dark', auto_backup: false, last_backup: null, language: null } };
 export const routes = {};            // page -> async (container, arg)
 export const cleanups = [];          // functions run on navigation (timers etc.)
 

@@ -49,10 +49,10 @@ const fetchAll = () =>
 routes.overview = async (v) => {
   const t0 = today(),
     wk = weekStart(t0, S.prefs.week_start);
-  const [tasks, acts, transactions, invoices, payments] = await fetchAll();
-  const workouts = await must(
-    sb.from("workouts").select("*").eq("workout_date", t0),
-  );
+  const [[tasks, acts, transactions, invoices, payments], workouts] = await Promise.all([
+    fetchAll(),
+    must(sb.from("workouts").select("*").eq("workout_date", t0)),
+  ]);
   const data = { transactions, invoices, payments },
     ws = R.ws || undefined;
   const live = tasks.filter((t) => t.status !== "cancelled");
